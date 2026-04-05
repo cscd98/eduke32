@@ -8,6 +8,9 @@ Ken Silverman's official web site: http://www.advsys.net/ken
 
 #ifdef USE_OPENGL
 
+#ifdef LIBRETRO
+#include "vr.h"
+#endif
 #include "build.h"
 #include "common.h"
 #include "editor.h"
@@ -672,6 +675,17 @@ static void polymost_setCurrentShaderProgram(uint32_t programID)
     glUniform4f(polymost1ColorCorrectionLoc, g_glColorCorrection.x, g_glColorCorrection.y, g_glColorCorrection.z, g_glColorCorrection.w);
 }
 
+#ifdef LIBRETRO
+void polymost_forceShaderRebind(void)
+{
+    if (polymost1BasicShaderProgramID)
+    {
+        polymost1CurrentShaderProgramID = 0;
+        polymost_setCurrentShaderProgram(polymost1BasicShaderProgramID);
+    }
+}
+#endif
+
 void polymost_setColorCorrection(vec4f_t const &colorCorrection)
 {
     if (!gl.currentShaderProgramID || gl.currentShaderProgramID != polymost1CurrentShaderProgramID)
@@ -934,6 +948,35 @@ void polymost_initdrawpoly(void)
 
     buildgl_bindBuffer(GL_ARRAY_BUFFER, 0);
 }
+
+#ifdef LIBRETRO
+void polymost_debugShaders(void)
+{
+    GLint status;
+    glGetProgramiv(polymost1BasicShaderProgramID, GL_LINK_STATUS, &status);
+
+    if (!status)
+    {
+        char log[1024];
+        glGetProgramInfoLog(polymost1BasicShaderProgramID, sizeof(log), nullptr, log);
+        printf("basic shader link log: %s\n", log);
+    }
+
+    glGetProgramiv(polymost1ExtendedShaderProgramID, GL_LINK_STATUS, &status);
+
+    if (!status) {
+        char log[1024];
+        glGetProgramInfoLog(polymost1ExtendedShaderProgramID, sizeof(log), nullptr, log);
+        printf("extended shader link log: %s\n", log);
+    }
+}
+
+void polymost_resetShaderIDs(void)
+{
+    polymost1BasicShaderProgramID    = 0;
+    polymost1ExtendedShaderProgramID = 0;
+}
+#endif
 
 void polymost_glinit()
 {
@@ -1714,6 +1757,29 @@ static void Polymost_SendTexToDriver(int32_t const doalloc,
     }
 #endif
 
+#if defined(LIBRETRO) && defined(EDUKE32_GLES)
+    // GLES does not accept desktop packed 8_8_8_8 pixel types. Convert the
+    // engine's BGRA uploads to ordinary RGBA bytes without relying on BGRA extensions.
+    auto pixels = pic;
+    coltype *rgba = nullptr;
+
+    if (texfmt == GL_BGRA && pic)
+    {
+        rgba = (coltype *)Xmalloc((size_t)siz.x * siz.y * sizeof(coltype));
+        for (size_t i = 0; i < (size_t)siz.x * siz.y; ++i)
+            rgba[i] = {pic[i].b, pic[i].g, pic[i].r, pic[i].a};
+
+        pixels = rgba;
+    }
+
+    if (doalloc & 1)
+        glTexImage2D(GL_TEXTURE_2D, level, GL_RGBA8, siz.x, siz.y, 0,
+            GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+    else
+        glTexSubImage2D(GL_TEXTURE_2D, level, 0, 0, siz.x, siz.y,
+            GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+    Xfree(rgba);
+#else
 #if B_BIG_ENDIAN
     GLenum type = GL_UNSIGNED_INT_8_8_8_8;
 #else
@@ -1723,6 +1789,7 @@ static void Polymost_SendTexToDriver(int32_t const doalloc,
         glTexImage2D(GL_TEXTURE_2D, level, intexfmt, siz.x,siz.y, 0, texfmt, type, pic);
     else
         glTexSubImage2D(GL_TEXTURE_2D, level, 0,0, siz.x,siz.y, texfmt, type, pic);
+#endif
 }
 
 void uploadtexture(int32_t doalloc, vec2_t siz, int32_t texfmt,
@@ -1877,7 +1944,11 @@ void uploadtextureindexed(int32_t doalloc, vec2_t offset, vec2_t siz, intptr_t t
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST);
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 1.f);
 
+#if defined(LIBRETRO) && defined(EDUKE32_GLES)
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, siz.y, siz.x, 0, GL_RED, GL_UNSIGNED_BYTE, (void*) tile);
+#else
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, siz.y, siz.x, 0, GL_RED, GL_UNSIGNED_BYTE, (void*) tile);
+#endif
     }
     else
     {
@@ -1957,7 +2028,11 @@ void uploadpalswap(int32_t palookupnum)
         glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 1.f);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+#if defined(LIBRETRO) && defined(EDUKE32_GLES)
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, PALSWAP_TEXTURE_SIZE, PALSWAP_TEXTURE_SIZE, 0, GL_RED, GL_UNSIGNED_BYTE, NULL);
+#else
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, PALSWAP_TEXTURE_SIZE, PALSWAP_TEXTURE_SIZE, 0, GL_RED, GL_UNSIGNED_BYTE, NULL);
+#endif
     }
 
     int32_t column = palookupnum%(PALSWAP_TEXTURE_SIZE/256);
@@ -6914,6 +6989,10 @@ void polymost_drawrooms()
         ghoriz2 = 0.f;
     }
 
+#ifdef LIBRETRO
+    if (libretro_vr_angles(&gshang, &gchang))
+        ghoriz2 = ghorizcorrect = 0.f;
+#endif
     ghoriz = (float)(ydimen>>1);
 
     resizeglcheck();
@@ -7446,6 +7525,10 @@ void polymost_prepareMirror(int32_t dax, int32_t day, int32_t daz, fix16_t daang
         gchang  = Bsqrtf(1.f - gshang * gshang);
         ghoriz2 = 0.f;
     }
+#ifdef LIBRETRO
+    if (libretro_vr_angles(&gshang, &gchang))
+        ghoriz2 = ghorizcorrect = 0.f;
+#endif
     ghoriz = (float)(ydimen>>1);
     gctang = cosf(gtang);
     gstang = sinf(gtang);

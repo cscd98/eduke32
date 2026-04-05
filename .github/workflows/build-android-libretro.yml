@@ -1,0 +1,25 @@
+name: Build eduke32 (libretro) on Android
+
+on: [push, pull_request]
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y git g++ make pkg-config python3 wget unzip
+        wget https://dl.google.com/android/repository/android-ndk-r29-linux.zip
+        unzip -q android-ndk-r29-linux.zip
+        echo "ANDROID_NDK_HOME=$PWD/android-ndk-r29" >> $GITHUB_ENV
+
+    - name: Checkout
+      uses: actions/checkout@v7
+      with:
+        submodules: recursive
+
+    - name: Build core
+      run: |
+        cd platform/Libretro
+        make -f Makefile.libretro platform=android-arm64

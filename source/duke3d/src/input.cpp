@@ -57,8 +57,10 @@ int32_t I_TextSubmit(void)
     // for some reason, if the mouse cursor is hidden, activating menu items is handled immediately on button press,
     // but if the mouse cursor is visible, activating menu items is handled on button release instead...
     // ...except for the right mouse button, which is handled immediately on button press in both cases.
+# if !defined EDUKE32_TOUCH_DEVICES
     if (!MOUSEINACTIVECONDITIONAL(1) || !MOUSEACTIVECONDITIONAL(1))
         MOUSE_ClearButton(M_LEFTBUTTON);
+#endif
 
     return CONTROL_GetUserInput(nullptr)->b_advance;
 }

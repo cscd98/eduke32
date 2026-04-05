@@ -32,7 +32,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "music.h"
 #include "osd.h"
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(LIBRETRO)
 # include "driver_winmm.h"
 # include <mmsystem.h>
 #endif
@@ -67,7 +67,7 @@ static int osdcmd_cvar_set_audiolib(osdcmdptr_t parm)
 
     if (parm->numparms == 0)
     {
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(LIBRETRO)
         if (!Bstrcasecmp(parm->name, "mus_mme_device"))
             WinMMDrv_MIDI_PrintDevices();
 #endif
@@ -81,7 +81,7 @@ static int osdcmd_cvar_set_audiolib(osdcmdptr_t parm)
 
     if (ASS_MIDISoundDriver == ASS_OPL3 && !Bstrcasecmp(parm->name, "mus_emidicard"))
         MIDI_Restart();
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(LIBRETRO)
     else if (ASS_MIDISoundDriver == ASS_WinMM && !Bstrcasecmp(parm->name, "mus_mme_device"))
         MIDI_Restart();
 #endif
@@ -120,7 +120,7 @@ void FX_InitCvars(void)
 {
     static osdcvardata_t cvars_audiolib [] ={
         { "mus_emidicard", "force a specific EMIDI instrument set", (void*) &ASS_EMIDICard, CVAR_INT | CVAR_FUNCPTR, -1, 10 },
-#ifdef __linux__
+#if defined(__linux__) && !defined(LIBRETRO)
         { "mus_alsa_clientid", "specify the ALSA MIDI client ID", (void*) &ALSA_ClientID, CVAR_INT | CVAR_FUNCPTR, 0, 255 },
         { "mus_alsa_portid", "specify the ALSA MIDI port ID", (void*) &ALSA_PortID, CVAR_INT | CVAR_FUNCPTR, 0, 15 },
 #endif
@@ -129,7 +129,7 @@ void FX_InitCvars(void)
         { "mus_al_stereo", "enable/disable OPL3 stereo mode", (void*) &AL_Stereo, CVAR_BOOL | CVAR_FUNCPTR, 0, 1 },
         { "mus_sf2_bank", "SoundFont 2 (.sf2) bank filename",  (void*) SF2_BankFile, CVAR_STRING | CVAR_FUNCPTR, 0, sizeof(SF2_BankFile) - 1 },
         { "mus_sf2_sampleblocksize", "number of samples per effect processing block", (void*) &SF2_EffectSampleBlockSize, CVAR_INT | CVAR_FUNCPTR, 1, 64 },
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(LIBRETRO)
         { "mus_mme_device", "select Windows MME MIDI output device", (void*) &WinMM_DeviceID, CVAR_INT | CVAR_FUNCPTR, -1, WinMMDrv_MIDI_GetNumDevices()-1 },
 #endif
 #if defined HAVE_XMP
@@ -145,7 +145,7 @@ void FX_InitCvars(void)
     for (auto& i : cvars_audiolib)
         OSD_RegisterCvar(&i, (i.flags & CVAR_FUNCPTR) ? osdcmd_cvar_set_audiolib : osdcmd_cvar_set);
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(LIBRETRO)
     OSD_RegisterFunction("mus_mme_debuginfo", "Windows MME MIDI buffer debug information", WinMMDrv_MIDI_PrintBufferInfo);
 #endif
 }
@@ -159,6 +159,8 @@ int FX_Init(int numvoices, int numchannels, int mixrate, void* initdata)
     int SoundCard = ASS_SDL;
 #elif defined RENDERTYPEWIN
     int SoundCard = ASS_DirectSound;
+#elif defined LIBRETRO
+    int SoundCard = ASS_Libretro;
 #endif
 
     VLOG_F(LOG_ASS, "Initializing Apogee Sound System");

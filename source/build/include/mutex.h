@@ -3,7 +3,7 @@
 
 /* Mutual exclusion mechanism wrappers for the different platforms */
 
-#ifdef RENDERTYPESDL
+#if defined(RENDERTYPESDL) && !defined(LIBRETRO)
 # define SDL_MAIN_HANDLED
 # include "sdl_inc.h"
 #endif
@@ -14,6 +14,9 @@ extern "C" {
 
 #if SDL_MAJOR_VERSION >= 2
 typedef SDL_SpinLock mutex_t;
+#elif defined(LIBRETRO)
+#include <rthreads/rthreads.h>
+typedef slock_t *mutex_t;
 #elif defined _WIN32
 # include "windows_inc.h"
 typedef CRITICAL_SECTION mutex_t;
@@ -23,13 +26,33 @@ typedef SDL_mutex * mutex_t;
 # error No mutex implementation provided.
 #endif
 
+#if defined(LIBRETRO)
+
+static FORCE_INLINE int32_t mutex_init(mutex_t *mutex)
+{
+    *mutex = slock_new();
+    return *mutex ? 0 : -1;
+}
+
+static FORCE_INLINE void mutex_destroy(mutex_t *mutex)
+{
+    if (*mutex)
+        slock_free(*mutex);
+}
+
+#else
+
 extern int32_t mutex_init(mutex_t *mutex);
 extern void mutex_destroy(mutex_t *mutex);
+
+#endif
 
 static FORCE_INLINE void mutex_lock(mutex_t *mutex)
 {
 #if SDL_MAJOR_VERSION >= 2
     SDL_AtomicLock(mutex);
+#elif defined(LIBRETRO)
+    slock_lock(*mutex);
 #elif defined _WIN32
     EnterCriticalSection(mutex);
 #elif SDL_MAJOR_VERSION == 1
@@ -41,6 +64,8 @@ static FORCE_INLINE void mutex_unlock(mutex_t *mutex)
 {
 #if SDL_MAJOR_VERSION >= 2
     SDL_AtomicUnlock(mutex);
+#elif defined(LIBRETRO)
+    slock_unlock(*mutex);
 #elif defined _WIN32
     LeaveCriticalSection(mutex);
 #elif SDL_MAJOR_VERSION == 1
@@ -53,6 +78,8 @@ static FORCE_INLINE bool mutex_try(mutex_t *mutex)
 {
 #if SDL_MAJOR_VERSION >= 2
     return SDL_AtomicTryLock(mutex);
+#elif defined(LIBRETRO)
+    return slock_try_lock(*mutex);
 #elif defined _WIN32
     return TryEnterCriticalSection(mutex);
 #else

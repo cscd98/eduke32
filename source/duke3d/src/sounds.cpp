@@ -77,7 +77,7 @@ static FORCE_INLINE void S_FillVoiceInfo(voiceinfo_t *snd, int16_t const owner, 
 
 void S_SoundStartup(void)
 {
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(LIBRETRO)
     void *initdata = (void *) win_gethwnd(); // used for DirectSound
 #else
     void *initdata = NULL;

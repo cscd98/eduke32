@@ -1,8 +1,9 @@
-
-#ifdef RENDERTYPEWIN
+#if defined RENDERTYPEWIN
 # include "winlayer.h"
-#else
+#elif defined RENDERTYPESDL
 # include "sdlayer.h"
+#elif defined LIBRETRO
+# include "retrolayer.h"
 #endif
 
 #undef STARTUP_SETUP_WINDOW

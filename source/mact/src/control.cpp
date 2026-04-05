@@ -19,7 +19,7 @@
 #include "osd.h"
 #include "pragmas.h"
 
-#ifdef __ANDROID__
+#if defined(__ANDROID__) && !defined(LIBRETRO)
 #include "android.h"
 #endif
 
@@ -521,7 +521,7 @@ static void controlPollDevices(ControlInfo *const info)
     memset(info, 0, sizeof(ControlInfo));
     handleevents();
 
-#ifdef __ANDROID__
+#if defined(__ANDROID__) && !defined(LIBRETRO)
     CONTROL_Android_PollDevices(info);
 #endif
 
@@ -631,7 +631,7 @@ void CONTROL_ClearButton(int whichbutton)
 {
     if (CONTROL_CheckRange(whichbutton)) return;
 
-#ifdef __ANDROID__
+#if defined(__ANDROID__) && !defined(LIBRETRO)
     CONTROL_Android_ClearButton(whichbutton);
 #endif
 
@@ -697,7 +697,7 @@ static void controlUpdateGameFunctions(void)
 
 void CONTROL_GetInput(ControlInfo *info)
 {
-#ifdef __ANDROID__
+#if defined(__ANDROID__) && !defined(LIBRETRO)
     CONTROL_Android_PollDevices(info);
 #endif
     controlPollDevices(info);

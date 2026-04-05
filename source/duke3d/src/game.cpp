@@ -22,6 +22,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #define game_c_
 
+#ifdef LIBRETRO
+#include "vr.h"
+#endif
 #include "anim.h"
 #include "cheats.h"
 #include "cmdline.h"
@@ -1123,6 +1126,9 @@ void G_DrawRooms(int32_t playerNum, int32_t smoothRatio)
                 LOG_F(ERROR, "EVENT_DISPLAYROOMS return value must be 0 or 1, all other values are reserved.");
 #endif
 
+#ifdef LIBRETRO
+            libretro_vr_camera(&CAMERA(pos.x), &CAMERA(pos.y), &CAMERA(pos.z), &CAMERA(q16ang), &CAMERA(sect));
+#endif
             G_HandleMirror(CAMERA(pos.x), CAMERA(pos.y), CAMERA(pos.z), CAMERA(q16ang), CAMERA(q16horiz), smoothRatio);
             G_ClearGotMirror();
 #ifdef LEGACY_ROR
@@ -5192,7 +5198,7 @@ FAKE_F3:
             ud.last_overhead = ud.overhead_on;
         }
 
-#ifdef __ANDROID__
+#if defined(__ANDROID__) && !defined(LIBRETRO)
         if (ud.overhead_on == 1)
             ud.scrollmode = 0;
         else if (ud.overhead_on == 2)
@@ -6097,7 +6103,10 @@ static inline void G_CheckGametype(void)
         ud.m_respawn_items = ud.m_respawn_inventory = 1;
 }
 
-static void G_PostLoadPalette(void)
+#ifndef LIBRETRO
+static
+#endif
+void G_PostLoadPalette(void)
 {
     if (!(duke3d_globalflags & DUKE3D_NO_PALETTE_CHANGES))
     {
@@ -6166,7 +6175,10 @@ static void A_InitEnemyFlags(void)
 }
 #undef SETFLAG
 
-static void G_SetupGameButtons(void);
+#ifndef LIBRETRO
+static
+#endif
+void G_SetupGameButtons(void);
 
 // Throw in everything here that needs to be called after a Lua game state
 // recreation (or on initial startup in a non-Lunatic build.)
@@ -6201,7 +6213,10 @@ static void G_FatalEngineInitError(void)
     fatal_exit(tempbuf);
 }
 
-static void G_Startup(void)
+#ifndef LIBRETRO
+static
+#endif
+void G_Startup(void)
 {
     int32_t i;
 
@@ -6346,7 +6361,10 @@ void G_BackToMenu(void)
     G_UpdateAppTitle();
 }
 
-static int G_EndOfLevel(void)
+#ifndef LIBRETRO
+static
+#endif
+int G_EndOfLevel(void)
 {
     auto &p = *g_player[myconnectindex].ps;
 
@@ -6493,12 +6511,15 @@ void drawframe_do(void)
 
     int const smoothratio = calc_smoothratio(totalclock, ototalclock);
 
-    G_DrawRooms(screenpeek, smoothratio);
-
-    if (videoGetRenderMode() >= REND_POLYMOST)
-        G_DrawBackground();
-
-    G_DisplayRest(smoothratio);
+#ifdef LIBRETRO
+    if (!libretro_vr_draw(screenpeek, smoothratio))
+#endif
+    {
+        G_DrawRooms(screenpeek, smoothratio);
+        if (videoGetRenderMode() >= REND_POLYMOST)
+            G_DrawBackground();
+        G_DisplayRest(smoothratio);
+    }
 
     g_frameJustDrawn = true;
     g_lastFrameEndTime = timerGetNanoTicks();
@@ -7487,7 +7508,10 @@ void A_SpawnRandomGlass(int spriteNum, int wallNum, int glassCnt)
 }
 #endif
 
-static void G_SetupGameButtons(void)
+#ifndef LIBRETRO
+static
+#endif
+void G_SetupGameButtons(void)
 {
     CONTROL_DefineFlag(gamefunc_Move_Forward,FALSE);
     CONTROL_DefineFlag(gamefunc_Move_Backward,FALSE);

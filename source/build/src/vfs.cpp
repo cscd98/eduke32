@@ -286,6 +286,17 @@ int32_t findfrompath(const char *fn, char **where)
     if (!fn || !fn[0])
         return -1;
 
+#ifdef LIBRETRO
+    if (strstr(fn, "://"))
+    {
+        if (!buildvfs_exists(fn))
+            return -1;
+
+        *where = Xstrdup(fn);
+        return 0;
+    }
+#endif
+
     if (pathsearchmode)
     {
         // test unmolested filename first
@@ -412,6 +423,16 @@ buildvfs_kfd openfrompath(const char *fn, int32_t flags, int32_t mode)
 
 buildvfs_FILE fopenfrompath(const char *fn, const char *mode)
 {
+#ifdef LIBRETRO
+    char *path = nullptr;
+    if (findfrompath(fn, &path) < 0)
+        return nullptr;
+
+    auto file = libretro_vfs_fopen(path, mode);
+    Xfree(path);
+
+    return file;
+#else
     int32_t fh;
     buildvfs_FILE h;
     int32_t bmode = 0, smode = 0;
@@ -436,6 +457,7 @@ buildvfs_FILE fopenfrompath(const char *fn, const char *mode)
     if (!h) close(fh);
 
     return h;
+#endif
 }
 
 #define MAXGROUPFILES 8     // Warning: Fix groupfil if this is changed

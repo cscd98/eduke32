@@ -427,17 +427,33 @@ static void ProcessGroups(BUILDVFS_FIND_REC *srch, native_t maxsize)
 
             fh = openfrompath(sidx->name, BO_RDONLY|BO_BINARY, BS_IREAD);
             if (fh < 0) continue;
+#ifdef LIBRETRO
+            if (Bfstat(fh, &st) || !st.st_size || st.st_size > maxsize)
+            {
+                buildvfs_close(fh);
+                continue;
+            }
+#else
             if (Bfstat(fh, &st)) continue;
             if (!st.st_size || st.st_size > maxsize) continue;
+#endif
 
             DLOG_F(INFO, " Checksumming %s...", sidx->name);
             do
             {
+#ifdef LIBRETRO
+                b = buildvfs_read(fh, buf, ReadSize);
+#else
                 b = read(fh, buf, ReadSize);
+#endif
                 if (b > 0) crcval = Bcrc32((uint8_t *)buf, b, crcval);
             }
             while (b == ReadSize);
+#ifdef LIBRETRO
+            buildvfs_close(fh);
+#else
             close(fh);
+#endif
 
             LOG_F(INFO, " %s has checksum 0x%08x", sidx->name, crcval);
 
@@ -525,7 +541,11 @@ int32_t ScanGroups(void)
             for (fg = usedgrpcache; fg; fg=fgg)
             {
                 fgg = fg->next;
+#ifdef LIBRETRO
+                libretro_vfs_fprintf(fp, "\"%s\" %d %d %d\n", fg->name, fg->size, fg->mtime, fg->crcval);
+#else
                 fprintf(fp, "\"%s\" %d %d %d\n", fg->name, fg->size, fg->mtime, fg->crcval);
+#endif
                 Xfree(fg);
             }
             buildvfs_fclose(fp);

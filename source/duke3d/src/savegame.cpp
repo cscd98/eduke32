@@ -843,7 +843,7 @@ uint16_t G_CountOldSaves(void)
 
 int32_t G_SavePlayer(savebrief_t & sv, bool isAutoSave)
 {
-#ifdef __ANDROID__
+#if defined(__ANDROID__) && !defined(LIBRETRO)
     G_SavePalette();
 #endif
 

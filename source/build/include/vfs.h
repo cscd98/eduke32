@@ -6,6 +6,10 @@
 
 #include "compat.h"
 
+#ifdef LIBRETRO
+#include "vfs_build.h"
+#else
+
 #ifdef USE_PHYSFS
 
 #include "physfs.h"
@@ -155,6 +159,8 @@ static FORCE_INLINE int buildvfs_isdir(char const *path)
 #define buildvfs_unlink(path) unlink(path)
 
 #endif
+
+#endif // LIBRETRO
 
 #define MAYBE_FCLOSE_AND_NULL(fileptr) do { \
     if (fileptr) { buildvfs_fclose(fileptr); fileptr = buildvfs_FILE{}; } \

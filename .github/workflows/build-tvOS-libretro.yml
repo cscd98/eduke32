@@ -1,0 +1,20 @@
+name: Build eduke32 (libretro) on tvOS
+
+on: [push, pull_request]
+
+env:
+  core_id: eduke32_libretro
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v7
+      with:
+        submodules: recursive
+
+    - name: Build core
+      run: |
+        cd platform/Libretro
+        make -f Makefile.libretro platform=tvos-arm64

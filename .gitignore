@@ -31,6 +31,7 @@ obj/
 apps/
 *.exe
 /*.dll
+eduke32_libretro.dll
 *.dylib
 *.so
 *.elf
@@ -50,6 +51,9 @@ texturecache
 *.manifest
 /*.map
 /platform/Windows/*.map
+platform/Libretro/build_obj
+platform/Libretro/screenshots
+platform/source
 *.pdb
 *.iobj
 *.ipdb

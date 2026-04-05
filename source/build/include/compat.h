@@ -564,6 +564,27 @@ typedef FILE BFILE;
 #define Blseek lseek
 #define Bstat stat
 #define Bfstat fstat
+
+#ifdef LIBRETRO
+#ifdef __cplusplus
+#include "vfs_libretro.h"
+#undef Bopen
+#undef Bclose
+#undef Bread
+#undef Bwrite
+#undef Blseek
+#undef Bfstat
+#define Bopen libretro_vfs_open
+#define Bclose libretro_vfs_close
+#define Bread libretro_vfs_read
+#define Bwrite libretro_vfs_write
+#define Blseek libretro_vfs_seek
+#define Bfstat libretro_vfs_fstat
+#undef Bstat
+#define Bstat libretro_stat
+#endif
+#endif
+
 #define Bfileno fileno
 #define Bferror ferror
 #define Bfopen fopen
@@ -728,7 +749,7 @@ static FORCE_INLINE int32_t Blrintf(const float x)
 # define Bsqrtf sqrtf
 #endif
 
-#ifdef __ANDROID__
+#if defined(__ANDROID__) && !defined(LIBRETRO)
 void eduke32_exit_return(int) ATTRIBUTE((noreturn));
 # define exit(x) eduke32_exit_return(x)
 #endif
@@ -1539,6 +1560,10 @@ static inline void maybe_grow_buffer(char ** const buffer, int32_t * const buffe
 #if defined __ANDROID__ || defined EDUKE32_IOS
 # define EDUKE32_TOUCH_DEVICES
 # define EDUKE32_GLES
+#endif
+
+#ifdef LIBRETRO
+# undef EDUKE32_TOUCH_DEVICES
 #endif
 
 #if DEBUGGINGAIDS>=2

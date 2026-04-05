@@ -862,6 +862,9 @@ int32_t baselayer_init(void)
 
 void maybe_redirect_outputs(void)
 {
+#ifdef LIBRETRO
+    return;
+#else
 #if !(defined __APPLE__ && defined __BIG_ENDIAN__)
     char *argp;
 
@@ -880,6 +883,7 @@ void maybe_redirect_outputs(void)
         *stdout = *fp;
         *stderr = *fp;
     }
+#endif
 #endif
 }
 

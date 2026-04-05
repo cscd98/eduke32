@@ -6,6 +6,9 @@
 // by Jonathon Fowler (jf@jonof.id.au)
 // by the EDuke32 team (development@voidpoint.com)
 
+#ifdef LIBRETRO
+#include "vr.h"
+#endif
 #include "compat.h"
 #include "build.h"
 #include "engine_priv.h"
@@ -59,7 +62,11 @@ void fullscreen_tint_gl(uint8_t r, uint8_t g, uint8_t b, uint8_t f)
     buildgl_setDisabled(GL_ALPHA_TEST);
     polymost_setFogEnabled(false);
 
+#ifdef LIBRETRO
+    libretro_vr_blend(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+#else
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+#endif
     buildgl_setEnabled(GL_BLEND);
     glColor4ub(r, g, b, f);
 
@@ -512,12 +519,20 @@ void handle_blend(uint8_t enable, uint8_t blend, uint8_t def)
 
     if (!enable)
     {
+#ifdef LIBRETRO
+        libretro_vr_blend(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+#else
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+#endif
         return;
     }
 
     glblenddef_t const * const glbdef = glblend[blend].def + def;
+#ifdef LIBRETRO
+    libretro_vr_blend(blendFuncTokens[glbdef->src], blendFuncTokens[glbdef->dst]);
+#else
     glBlendFunc(blendFuncTokens[glbdef->src], blendFuncTokens[glbdef->dst]);
+#endif
 }
 #endif
 

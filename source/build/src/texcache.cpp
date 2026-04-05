@@ -286,7 +286,11 @@ void texcache_init(void)
     if (!texcache.indexFilePtr)
     {
         if (texcache.dataFilePtr)
+#ifdef LIBRETRO
+            buildvfs_fclose(texcache.dataFilePtr);
+#else
             Bfclose((FILE *)texcache.dataFilePtr);
+#endif
 
         texcache.dataFilePtr = nullptr;
     }
@@ -309,10 +313,18 @@ static void texcache_deletefiles(void)
 {
     Bassert(!texcache.indexFilePtr && !texcache.dataFilePtr);
 
+#ifdef LIBRETRO
+    buildvfs_unlink(TEXCACHEFILE);
+#else
     unlink(TEXCACHEFILE);
+#endif
     Bstrcpy(ptempbuf, TEXCACHEFILE);
     Bstrcat(ptempbuf, ".index");
+#ifdef LIBRETRO
+    buildvfs_unlink(ptempbuf);
+#else
     unlink(ptempbuf);
+#endif
 }
 
 int32_t texcache_enabled(void)
@@ -885,6 +897,9 @@ int32_t texcache_loadtile(const texcacheheader *head, int32_t *doalloc, pthtyp *
 
 void texcache_setupmemcache(void)
 {
+#ifdef LIBRETRO
+    return;
+#else
     if (!glusememcache || !texcache_enabled())
         return;
 
@@ -907,6 +922,7 @@ void texcache_setupmemcache(void)
     {
         LOG_F(INFO, "Mapped %d byte texcache", (int)texcache.rw_mmap.length());
     }
+#endif
 }
 
 // ---------------------------------------

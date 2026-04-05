@@ -1103,7 +1103,7 @@ void G_DisplayRest(int32_t smoothratio)
             }
             else
             {
-#ifdef __ANDROID__
+#if defined(__ANDROID__) && !defined(LIBRETRO)
                 CONTROL_Android_ScrollMap(&ud.fola, &ud.folx, &ud.foly, &pp->zoom);
 #else
                 if (!ud.pause_on)

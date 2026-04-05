@@ -1,0 +1,25 @@
+name: Build eduke32 (libretro) on macOS
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - name: "macOS arm64"
+          os: macos-latest
+          ZIP_NAME_SUFFIX: macos_arm64
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v7
+      with:
+        submodules: recursive
+
+    - name: Build core
+      run: |
+        cd platform/Libretro
+        make -f Makefile.libretro platform=osx

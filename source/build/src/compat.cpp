@@ -84,7 +84,10 @@ sm_allocator g_sm_heap;
 //
 char *Bgethomedir(void)
 {
-#ifdef _WIN32
+#if defined(LIBRETRO) && defined(__APPLE__)
+    char const *home = getenv("HOME");
+    return home && home[0] ? Xstrdup(home) : nullptr;
+#elif defined(_WIN32)
     int32_t loaded = 0;
     auto hShell32 = GetModuleHandle("shell32.dll");
 
@@ -151,7 +154,7 @@ char *Bgetappdir(void)
         dir = Xstrdup(appdir);
     }
 
-#elif defined EDUKE32_OSX
+#elif defined(EDUKE32_OSX) && !defined(LIBRETRO)
     dir = osx_getappdir();
 #elif defined __FreeBSD__
     // the sysctl should also work when /proc/ is not mounted (which seems to
@@ -352,6 +355,17 @@ typedef struct
     char name[1];
 } BDIR_real;
 
+#ifdef LIBRETRO
+#define Bopendir libretro_native_opendir
+#define Breaddir libretro_native_readdir
+#define Bclosedir libretro_native_closedir
+extern "C" {
+BDIR *Bopendir(const char *name);
+struct Bdirent *Breaddir(BDIR *dir);
+int32_t Bclosedir(BDIR *dir);
+}
+#endif
+
 BDIR *Bopendir(const char *name)
 {
     BDIR_real *dirr;
@@ -468,6 +482,11 @@ int32_t Bclosedir(BDIR *dir)
 
     return 0;
 }
+#ifdef LIBRETRO
+#undef Bopendir
+#undef Breaddir
+#undef Bclosedir
+#endif
 #endif
 
 

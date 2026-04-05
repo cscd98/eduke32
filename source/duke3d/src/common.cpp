@@ -645,7 +645,7 @@ void G_AddSearchPaths(void)
     addsearchpath("/usr/share/games/" APPBASENAME);
     addsearchpath("/usr/local/share/games/" APPBASENAME);
     addsearchpath("/app/extensions/extra");
-#elif defined EDUKE32_OSX
+#elif defined(EDUKE32_OSX) && !defined(LIBRETRO)
     char buf[BMAX_PATH];
     int32_t i;
     char *applications[] = { osx_getapplicationsdir(0), osx_getapplicationsdir(1) };

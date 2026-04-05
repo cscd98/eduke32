@@ -5164,9 +5164,11 @@ static int32_t      polymer_bindmaterial(const _prmaterial *material, const int1
     if (material->highpalookupmap)
         programbits |= (1 << PR_BIT_HIGHPALOOKUP_MAP);
 
+#ifdef USE_GLEXT
     // PR_BIT_DIFFUSE_DETAIL_MAP
     if (r_detailmapping && material->detailmap)
         programbits |= (1 << PR_BIT_DIFFUSE_DETAIL_MAP);
+#endif
 
     // PR_BIT_DIFFUSE_MODULATION
     programbits |= (1 << PR_BIT_DIFFUSE_MODULATION);
@@ -5187,9 +5189,11 @@ static int32_t      polymer_bindmaterial(const _prmaterial *material, const int1
     if (!material->artmap && !curlight && !material->mirrormap)
         programbits |= (1 << PR_BIT_FOG);
 
+#ifdef USE_GLEXT
     // PR_BIT_GLOW_MAP
     if (!curlight && r_glowmapping && material->glowmap)
         programbits |= (1 << PR_BIT_GLOW_MAP);
+#endif
 
     // PR_BIT_POINT_LIGHT
     if (matlightcount) {

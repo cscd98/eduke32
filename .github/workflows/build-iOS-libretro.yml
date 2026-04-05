@@ -1,0 +1,17 @@
+name: Build eduke32 (libretro) on iOS
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v7
+      with:
+        submodules: recursive
+
+    - name: Build core
+      run: |
+        cd platform/Libretro
+        make -f Makefile.libretro platform=ios

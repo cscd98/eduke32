@@ -861,7 +861,18 @@ extern "C"
         return allocator->Alloc(bytesCount, alignment);
     }
 
-    SMMALLOC_API INLINE void _sm_free(sm_allocator allocator, void* p) { return allocator->Free(p); }
+    SMMALLOC_API INLINE void _sm_free(sm_allocator allocator, void* p)
+    {
+        if (!p)
+            return;
+
+        if (!allocator) {
+            free(p);
+            return;
+        }
+
+        allocator->Free(p);
+    }
 
     SMMALLOC_API INLINE void* _sm_realloc(sm_allocator allocator, void* p, size_t bytesCount, size_t alignment)
     {
