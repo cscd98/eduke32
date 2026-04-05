@@ -1,0 +1,282 @@
+##############################################################################
+# Makefile — EDuke32 libretro core
+#
+# Usage:
+#   make                      # build for host platform
+#   make platform=xyz         # cross-compile for xyz platform
+#   make DEBUG=1              # debug build
+##############################################################################
+
+TARGET_NAME  := eduke32_libretro
+CORE_DIR     := .
+RARCH_CORE   := $(TARGET_NAME).so
+NOASM        := 1
+DEBUG        ?= 1
+POLYMER      ?= 1
+USE_OPENGL   ?= 1
+
+###############################################################################
+# Platform detection
+###############################################################################
+ifeq ($(platform),)
+  platform := unix
+  ifeq ($(shell uname -a),)
+    platform := win
+  else ifneq ($(findstring MINGW,$(shell uname -a)),)
+    platform := win
+  else ifneq ($(findstring Darwin,$(shell uname -a)),)
+    platform := osx
+  endif
+endif
+
+###############################################################################
+# Compiler
+###############################################################################
+CC  ?= gcc
+CXX ?= g++
+AR  ?= ar
+
+CFLAGS   := -Wall -Wextra -Wno-unused-parameter -funsigned-char
+CXXFLAGS := $(CFLAGS) -std=c++14
+LDFLAGS  :=
+DEFINES  :=
+
+ifeq ($(DEBUG),1)
+  CFLAGS   += -O0 -g
+  CXXFLAGS += -O0 -g
+  DEFINES  += -DDEBUGGINGAIDS
+else
+  CFLAGS   += -O2
+  CXXFLAGS += -O2
+  DEFINES  += -DNDEBUG
+endif
+
+ifneq (0,$(NOASM))
+  CFLAGS += -DNOASM
+  CXXFLAGS += -DNOASM
+endif
+
+###############################################################################
+# Platform-specific flags
+###############################################################################
+ifeq ($(platform), unix)
+  EXT      := so
+  CFLAGS   += -fPIC
+  CXXFLAGS += -fPIC
+  LDFLAGS  += -shared -Wl,--no-undefined
+
+else ifeq ($(platform), osx)
+  EXT      := dylib
+  CFLAGS   += -fPIC
+  CXXFLAGS += -fPIC
+  LDFLAGS  += -dynamiclib
+
+else ifeq ($(platform), ios)
+  TARGET_NAME := $(TARGET_NAME)_ios
+  EXT      := dylib
+  CFLAGS   += -fPIC
+  CXXFLAGS += -fPIC
+  LDFLAGS  += -dynamiclib
+  ifeq ($(IOSSDK),)
+    IOSSDK := $(shell xcodebuild -version -sdk iphoneos Path)
+	endif
+  CC       := clang -arch arm64 -isysroot $(IOSSDK)
+  CXX      := clang++ -arch arm64 -isysroot $(IOSSDK)
+
+else ifeq ($(platform), tvos-arm64)
+  TARGET_NAME := $(TARGET_NAME)_tvos
+  EXT      := dylib
+  CFLAGS   += -fPIC
+  CXXFLAGS += -fPIC
+  LDFLAGS  += -dynamiclib
+  ifeq ($(IOSSDK),)
+    IOSSDK := $(shell xcodebuild -version -sdk appletvos Path)
+	endif
+  CC       := cc -arch arm64 -isysroot $(IOSSDK)
+  CXX      := c++ -arch arm64 -isysroot $(IOSSDK)
+
+else ifeq ($(platform), tvos-arm64)
+  TARGET_NAME := $(TARGET_NAME)_tvos
+  EXT      := dylib
+  CFLAGS   += -fPIC
+  CXXFLAGS += -fPIC
+  LDFLAGS  += -dynamiclib
+  ifeq ($(IOSSDK),)
+    IOSSDK := $(shell xcodebuild -version -sdk appletvos Path)
+	endif
+  CC       := cc -arch arm64 -isysroot $(IOSSDK)
+  CXX      := c++ -arch arm64 -isysroot $(IOSSDK)
+
+else ifeq ($(platform), win)
+  CC       := x86_64-w64-mingw32-gcc
+  CXX      := x86_64-w64-mingw32-g++
+  AR       := x86_64-w64-mingw32-ar
+  EXT      := dll
+  LDFLAGS += -shared -static-libgcc -static-libstdc++
+
+else ifeq ($(platform), android)
+  TARGET_NAME := $(TARGET_NAME)_android
+  ifndef ANDROID_NDK_ROOT
+    $(error ANDROID_NDK_ROOT is not set)
+  endif
+  ANDROID_TRIPLE := aarch64-linux-android
+  ANDROID_API    := 21
+  TOOLCHAIN    := $(ANDROID_NDK_ROOT)/toolchains/llvm/prebuilt/linux-x86_64
+  CC  := $(TOOLCHAIN)/bin/$(ANDROID_TRIPLE)$(ANDROID_API)-clang
+  CXX := $(TOOLCHAIN)/bin/$(ANDROID_TRIPLE)$(ANDROID_API)-clang++
+  AR    := $(TOOLCHAIN)/bin/llvm-ar
+  EXT   := so
+  CFLAGS   += -fPIC
+  CXXFLAGS += -fPIC
+  LDFLAGS  += -shared
+  USE_OPENGLES := 1
+  DEFINES += -DEDUKE32_TOUCH_DEVICES
+endif
+
+ifneq (,$(findstring webos,$(CROSS_COMPILE)$(findstring starfish,$(CROSS_COMPILE))))
+  USE_OPENGLES := 1
+endif
+
+RARCH_CORE := $(TARGET_NAME).$(EXT)
+
+###############################################################################
+# Paths
+###############################################################################
+EDUKE32_DIR          := ../../source
+DUKE3D_SRC           := $(EDUKE32_DIR)/duke3d/src
+BUILD_SRC            := $(EDUKE32_DIR)/build/src
+BUILD_INCLUDE        := $(EDUKE32_DIR)/build/include
+AUDIOLIB_SRC         := $(EDUKE32_DIR)/audiolib/src
+AUDIOLIB_INC         := $(EDUKE32_DIR)/audiolib/include
+GLAD_SRC             := $(EDUKE32_DIR)/glad/src
+GLAD_INCLUDE         := $(EDUKE32_DIR)/glad/include
+MACT_SRC             := $(EDUKE32_DIR)/mact/src
+MACT_INCLUDE         := $(EDUKE32_DIR)/mact/include
+LIBRETRO_COMMON_SRC  := $(CORE_DIR)/include/libretro-common
+
+###############################################################################
+# Include paths
+###############################################################################
+INCLUDES := \
+  -I$(CORE_DIR) \
+  -I$(CORE_DIR)/include \
+  -I$(CORE_DIR)/include/libretro-common/include \
+  -I$(DUKE3D_SRC) \
+  -I$(BUILD_INCLUDE) \
+  -I$(AUDIOLIB_INC) \
+  -I$(EDUKE32_DIR)/duke3d/include \
+  -I$(EDUKE32_DIR)/common/include \
+  -I$(GLAD_INCLUDE) \
+  -I$(MACT_INCLUDE)
+
+###############################################################################
+# Feature flags
+###############################################################################
+DEFINES += \
+  -DLIBRETRO \
+  -DAUDIOLIB_OUTPUT_CUSTOM \
+  -DPOLYMOST \
+  -DUSE_LIBPNG \
+  -DHAVE_VORBIS \
+  -DKSFORZLIB \
+  -DNETCODE_DISABLE
+
+ifeq (1,$(USE_OPENGL))
+  DEFINES += -DUSE_OPENGL
+else
+  override POLYMER := 0
+endif
+
+ifeq (1,$(USE_OPENGLES))
+  DEFINES += -DEDUKE32_GLES
+endif
+
+ifeq (1,$(POLYMER))
+  DEFINES += -DPOLYMER
+endif
+
+include Makefile.common
+
+###############################################################################
+# Object files
+###############################################################################
+OBJDIR := build_obj
+
+src_to_obj = $(patsubst $(2)/%.cpp,$(OBJDIR)/$(1)/%.o, \
+               $(patsubst $(2)/%.c,$(OBJDIR)/$(1)/%.o,$(3)))
+
+LIBRETRO_OBJS := $(call src_to_obj,libretro,$(CORE_DIR),$(LIBRETRO_SRCS))
+BUILD_OBJS    := $(call src_to_obj,build,$(BUILD_SRC),$(BUILD_SRCS))
+GLAD_OBJS     := $(call src_to_obj,glad,$(GLAD_SRC),$(GLAD_SRCS))
+GAME_OBJS     := $(call src_to_obj,duke3d,$(DUKE3D_SRC),$(GAME_SRCS))
+AUDIO_OBJS    := $(call src_to_obj,audiolib,$(AUDIOLIB_SRC),$(AUDIO_SRCS))
+MACT_OBJS     := $(call src_to_obj,mact,$(MACT_SRC),$(MACT_SRCS))
+COMMON_OBJS   := $(call src_to_obj,libretro-common,$(LIBRETRO_COMMON_SRC)/rthreads,$(LIBRETRO_COMMON_SRCS))
+GLSL_OBJS     := $(patsubst $(BUILD_SRC)/%.glsl,$(OBJDIR)/build/%.o,$(BUILD_GLSL))
+
+OBJS := \
+  $(LIBRETRO_OBJS) \
+  $(BUILD_OBJS) \
+  $(GLAD_OBJS) \
+  $(GAME_OBJS) \
+  $(AUDIO_OBJS) \
+  $(MACT_OBJS) \
+  $(COMMON_OBJS) \
+  $(GLSL_OBJS)
+
+###############################################################################
+# Pattern rules
+###############################################################################
+$(OBJDIR)/libretro/%.o: $(CORE_DIR)/%.cpp
+	@mkdir -p $(OBJDIR)/libretro
+	$(CXX) $(CXXFLAGS) $(DEFINES) $(INCLUDES) -c $< -o $@
+
+$(OBJDIR)/build/%.o: $(BUILD_SRC)/%.cpp
+	@mkdir -p $(OBJDIR)/build
+	$(CXX) $(CXXFLAGS) $(DEFINES) $(INCLUDES) -c $< -o $@
+
+$(OBJDIR)/build/%.o: $(BUILD_SRC)/%.c
+	@mkdir -p $(OBJDIR)/build
+	$(CC) $(CFLAGS) $(DEFINES) $(INCLUDES) -c $< -o $@
+
+$(OBJDIR)/glad/%.o: $(GLAD_SRC)/%.c
+	@mkdir -p $(OBJDIR)/glad
+	$(CC) $(CFLAGS) $(DEFINES) $(INCLUDES) -c $< -o $@
+
+$(OBJDIR)/duke3d/%.o: $(DUKE3D_SRC)/%.cpp
+	@mkdir -p $(OBJDIR)/duke3d
+	$(CXX) $(CXXFLAGS) $(DEFINES) $(INCLUDES) -c $< -o $@
+
+$(OBJDIR)/audiolib/%.o: $(AUDIOLIB_SRC)/%.cpp
+	@mkdir -p $(OBJDIR)/audiolib
+	$(CXX) $(CXXFLAGS) $(DEFINES) $(INCLUDES) -c $< -o $@
+
+$(OBJDIR)/mact/%.o: $(MACT_SRC)/%.cpp
+	@mkdir -p $(OBJDIR)/mact
+	$(CXX) $(CXXFLAGS) $(DEFINES) $(INCLUDES) -c $< -o $@
+
+$(OBJDIR)/libretro-common/%.o: $(LIBRETRO_COMMON_SRC)/rthreads/%.c
+	@mkdir -p $(OBJDIR)/libretro-common
+	$(CC) $(CFLAGS) $(DEFINES) $(INCLUDES) -c $< -o $@
+
+$(OBJDIR)/build/%.o: $(BUILD_SRC)/%.glsl
+	@mkdir -p $(OBJDIR)/build
+	@echo "Generating $@ from $<"
+
+	@echo 'extern char const *$*;' > $(OBJDIR)/build/$*.cpp
+	@echo 'char const *$* = R"shader(' >> $(OBJDIR)/build/$*.cpp
+	@cat $< >> $(OBJDIR)/build/$*.cpp
+	@echo ')shader";' >> $(OBJDIR)/build/$*.cpp
+
+	$(CXX) $(CXXFLAGS) $(DEFINES) $(INCLUDES) -c $(OBJDIR)/build/$*.cpp -o $@
+
+.PHONY: all clean
+
+all: $(RARCH_CORE)
+
+$(RARCH_CORE): $(OBJS)
+	$(CXX) $(LDFLAGS) -o $@ $^ -lm -lpthread -lz -lpng -lvorbisfile -lvorbis -logg
+
+clean:
+	rm -rf $(OBJDIR) $(RARCH_CORE)
+  

@@ -120,7 +120,7 @@ void FX_InitCvars(void)
 {
     static osdcvardata_t cvars_audiolib [] ={
         { "mus_emidicard", "force a specific EMIDI instrument set", (void*) &ASS_EMIDICard, CVAR_INT | CVAR_FUNCPTR, -1, 10 },
-#ifdef __linux__
+#if defined(__linux__) && !defined(LIBRETRO)
         { "mus_alsa_clientid", "specify the ALSA MIDI client ID", (void*) &ALSA_ClientID, CVAR_INT | CVAR_FUNCPTR, 0, 255 },
         { "mus_alsa_portid", "specify the ALSA MIDI port ID", (void*) &ALSA_PortID, CVAR_INT | CVAR_FUNCPTR, 0, 15 },
 #endif
@@ -159,6 +159,8 @@ int FX_Init(int numvoices, int numchannels, int mixrate, void* initdata)
     int SoundCard = ASS_SDL;
 #elif defined RENDERTYPEWIN
     int SoundCard = ASS_DirectSound;
+#elif defined LIBRETRO
+    int SoundCard = ASS_Libretro;
 #endif
 
     VLOG_F(LOG_ASS, "Initializing Apogee Sound System");

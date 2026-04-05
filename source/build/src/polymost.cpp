@@ -672,6 +672,17 @@ static void polymost_setCurrentShaderProgram(uint32_t programID)
     glUniform4f(polymost1ColorCorrectionLoc, g_glColorCorrection.x, g_glColorCorrection.y, g_glColorCorrection.z, g_glColorCorrection.w);
 }
 
+#ifdef LIBRETRO
+void polymost_forceShaderRebind(void)
+{
+    if (polymost1BasicShaderProgramID)
+    {
+        polymost1CurrentShaderProgramID = 0;
+        polymost_setCurrentShaderProgram(polymost1BasicShaderProgramID);
+    }
+}
+#endif
+
 void polymost_setColorCorrection(vec4f_t const &colorCorrection)
 {
     if (!gl.currentShaderProgramID || gl.currentShaderProgramID != polymost1CurrentShaderProgramID)
@@ -934,6 +945,32 @@ void polymost_initdrawpoly(void)
 
     buildgl_bindBuffer(GL_ARRAY_BUFFER, 0);
 }
+
+#ifdef LIBRETRO
+void polymost_debugShaders(void)
+{
+    GLint status;
+    glGetProgramiv(polymost1BasicShaderProgramID, GL_LINK_STATUS, &status);
+
+    if (!status) {
+        char log[1024];
+        glGetProgramInfoLog(polymost1BasicShaderProgramID, sizeof(log), nullptr, log);
+        printf("basic shader link log: %s\n", log);
+    }
+    glGetProgramiv(polymost1ExtendedShaderProgramID, GL_LINK_STATUS, &status);
+    if (!status) {
+        char log[1024];
+        glGetProgramInfoLog(polymost1ExtendedShaderProgramID, sizeof(log), nullptr, log);
+        printf("extended shader link log: %s\n", log);
+    }
+}
+
+void polymost_resetShaderIDs(void)
+{
+    polymost1BasicShaderProgramID    = 0;
+    polymost1ExtendedShaderProgramID = 0;
+}
+#endif
 
 void polymost_glinit()
 {

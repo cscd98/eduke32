@@ -43,6 +43,9 @@ typedef enum
     ASS_WinMM,
     ASS_SF2,
     ASS_ALSA,
+#ifdef LIBRETRO
+    ASS_Libretro,
+#endif
     ASS_NumSoundCards,
     ASS_AutoDetect = -2
 } soundcardnames;

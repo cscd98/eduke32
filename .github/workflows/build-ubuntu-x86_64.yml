@@ -1,0 +1,48 @@
+name: Build ubuntu x86_64
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  build-ubuntu-x86_64:
+    name: Build (Linux x86_64)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+            sudo apt-get install -y \
+            build-essential \
+            pkg-config \
+            libpng-dev \
+            libvorbis-dev \
+            libogg-dev
+
+      - name: Build core
+        run: |
+          cd platform/Libretro
+          make -f Makefile.libretro platform=unix
+
+#      - name: Strip core
+#        run: |
+#          cd platform/Libretro
+#          strip --strip-unneeded eduke32_libretro.so
+
+#      - name: Create ZIP artifact
+#        run: |
+#          cd platform/Libretro
+#          zip eduke32_libretro.so.zip eduke32_libretro.so
+
+#      - name: Upload artifact
+#        uses: actions/upload-artifact@v7
+#        with:
+#          name: eduke32_libretro.so.zip
+#          path: platform/Libretro/eduke32_libretro.so.zip

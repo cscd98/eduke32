@@ -50,6 +50,9 @@ texturecache
 *.manifest
 /*.map
 /platform/Windows/*.map
+platform/Libretro/build_obj
+platform/Libretro/screenshots
+platform/source
 *.pdb
 *.iobj
 *.ipdb

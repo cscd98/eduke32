@@ -9209,7 +9209,10 @@ static int osdcmd_endisableevent(osdcmdptr_t parm)
     return OSDCMD_OK;
 }
 
-static int32_t registerosdcommands(void)
+#ifndef LIBRETRO
+static
+#endif
+int32_t registerosdcommands(void)
 {
     OSD_RegisterFunction("addpath","addpath <path>: adds path to game filesystem", osdcmd_addpath);
 

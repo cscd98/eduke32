@@ -43,6 +43,10 @@
 # include "driver_alsa.h"
 #endif
 
+#ifdef LIBRETRO
+# include "driver_libretro.h"
+#endif
+
 int ASS_PCMSoundDriver  = ASS_AutoDetect;
 int ASS_MIDISoundDriver = ASS_AutoDetect;
 int ASS_EMIDICard = -1;
@@ -176,7 +180,7 @@ static struct
     // ALSA MIDI synthesiser
     {
         "ALSA",
-    #ifdef __linux__
+    #if defined(__linux__) && !defined(LIBRETRO)
         ALSADrv_GetError,
         ALSADrv_ErrorString,
 
@@ -195,6 +199,22 @@ static struct
         UNSUPPORTED_COMPLETELY
     #endif
     },
+
+#ifdef LIBRETRO
+    // libretro custom PCM driver
+    {
+        "Custom",
+        CustomDrv_GetError,
+        CustomDrv_ErrorString,
+        CustomDrv_PCM_Init,
+        CustomDrv_PCM_Shutdown,
+        CustomDrv_PCM_BeginPlayback,
+        CustomDrv_PCM_StopPlayback,
+        CustomDrv_PCM_Lock,
+        CustomDrv_PCM_Unlock,
+        UNSUPPORTED_MIDI,
+    },
+#endif
 };
 
 

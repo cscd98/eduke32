@@ -1,0 +1,171 @@
+###############################################################################
+# libretro shim sources  (in this directory)
+###############################################################################
+LIBRETRO_SRCS := \
+  $(CORE_DIR)/core.cpp \
+  $(CORE_DIR)/retrolayer.cpp \
+  $(CORE_DIR)/driver_libretro.cpp \
+  $(CORE_DIR)/options.cpp
+
+###############################################################################
+# Build engine sources
+###############################################################################
+BUILD_SRCS := \
+  $(BUILD_SRC)/cache1d.cpp \
+  $(BUILD_SRC)/clip.cpp \
+  $(BUILD_SRC)/colmatch.cpp \
+  $(BUILD_SRC)/defs.cpp \
+  $(BUILD_SRC)/engine.cpp \
+  $(BUILD_SRC)/hash.cpp \
+  $(BUILD_SRC)/hightile.cpp \
+  $(BUILD_SRC)/mdsprite.cpp \
+  $(BUILD_SRC)/mhk.cpp \
+  $(BUILD_SRC)/miniz.c \
+  $(BUILD_SRC)/miniz_tdef.c \
+  $(BUILD_SRC)/miniz_tinfl.c \
+  $(BUILD_SRC)/osd.cpp \
+  $(BUILD_SRC)/palette.cpp \
+  $(BUILD_SRC)/polymost.cpp \
+  $(BUILD_SRC)/pragmas.cpp \
+  $(BUILD_SRC)/scriptfile.cpp \
+  $(BUILD_SRC)/smalltextfont.cpp \
+  $(BUILD_SRC)/softsurface.cpp \
+  $(BUILD_SRC)/texcache.cpp \
+  $(BUILD_SRC)/textfont.cpp \
+  $(BUILD_SRC)/tiles.cpp \
+  $(BUILD_SRC)/vfs.cpp \
+  $(BUILD_SRC)/xxhash.c \
+  $(BUILD_SRC)/mmulti.c \
+  $(BUILD_SRC)/smmalloc.cpp \
+  $(BUILD_SRC)/smmalloc_generic.cpp \
+  $(BUILD_SRC)/smmalloc_tls.cpp \
+  $(BUILD_SRC)/compat.cpp \
+  $(BUILD_SRC)/loguru.cpp \
+  $(BUILD_SRC)/sjson.cpp \
+  $(BUILD_SRC)/timer.cpp \
+  $(BUILD_SRC)/fix16.cpp \
+  $(BUILD_SRC)/a-c.cpp \
+  $(BUILD_SRC)/baselayer.cpp \
+  $(BUILD_SRC)/glbuild.cpp \
+  $(BUILD_SRC)/screentext.cpp \
+  $(BUILD_SRC)/lz4.cpp \
+  $(BUILD_SRC)/kplib.cpp \
+  $(BUILD_SRC)/2d.cpp \
+  $(BUILD_SRC)/voxmodel.cpp \
+  $(BUILD_SRC)/communityapi.cpp \
+  $(BUILD_SRC)/common.cpp \
+  $(BUILD_SRC)/crc32.cpp \
+  $(BUILD_SRC)/tilepacker.cpp \
+  $(BUILD_SRC)/dxtfilter.cpp \
+  $(BUILD_SRC)/screenshot.cpp \
+  $(BUILD_SRC)/rev.cpp \
+  $(BUILD_SRC)/pngwrite.cpp \
+  $(BUILD_SRC)/klzw.cpp \
+  $(BUILD_SRC)/md4.cpp \
+  $(BUILD_SRC)/cpuid.cpp
+
+ifeq (1,$(USE_OPENGL))
+  BUILD_SRCS += \
+    $(BUILD_SRC)/glsurface.cpp \
+    $(BUILD_SRC)/polymer.cpp
+endif
+
+ifeq (0,$(NOASM))
+  BUILD_SRCS += $(BUILD_SRC)/a.nasm
+else
+  BUILD_SRCS += $(BUILD_SRC)/a-c.cpp
+endif
+
+# glad is kept separate because it is a .c file living outside BUILD_SRC's
+GLAD_SRCS := \
+  $(GLAD_SRC)/glad.c
+
+###############################################################################
+# Duke3D game sources
+###############################################################################
+GAME_SRCS := \
+  $(DUKE3D_SRC)/actors.cpp \
+  $(DUKE3D_SRC)/anim.cpp \
+  $(DUKE3D_SRC)/cheats.cpp \
+  $(DUKE3D_SRC)/cmdline.cpp \
+  $(DUKE3D_SRC)/config.cpp \
+  $(DUKE3D_SRC)/demo.cpp \
+  $(DUKE3D_SRC)/game.cpp \
+  $(DUKE3D_SRC)/gameexec.cpp \
+  $(DUKE3D_SRC)/gamedef.cpp \
+  $(DUKE3D_SRC)/gamevars.cpp \
+  $(DUKE3D_SRC)/gamestructures.cpp \
+  $(DUKE3D_SRC)/global.cpp \
+  $(DUKE3D_SRC)/input.cpp \
+  $(DUKE3D_SRC)/menus.cpp \
+  $(DUKE3D_SRC)/network.cpp \
+  $(DUKE3D_SRC)/osdcmds.cpp \
+  $(DUKE3D_SRC)/osdfuncs.cpp \
+  $(DUKE3D_SRC)/player.cpp \
+  $(DUKE3D_SRC)/premap.cpp \
+  $(DUKE3D_SRC)/savegame.cpp \
+  $(DUKE3D_SRC)/sbar.cpp \
+  $(DUKE3D_SRC)/screens.cpp \
+  $(DUKE3D_SRC)/sector.cpp \
+  $(DUKE3D_SRC)/sounds.cpp \
+  $(DUKE3D_SRC)/common.cpp \
+  $(DUKE3D_SRC)/grpscan.c \
+  $(DUKE3D_SRC)/dnames.cpp \
+  $(DUKE3D_SRC)/text.cpp \
+  $(DUKE3D_SRC)/rts.cpp
+
+###############################################################################
+# AudioLib sources
+###############################################################################
+AUDIO_SRCS := \
+  $(AUDIOLIB_SRC)/fx_man.cpp \
+  $(AUDIOLIB_SRC)/midi.cpp \
+  $(AUDIOLIB_SRC)/mix.cpp \
+  $(AUDIOLIB_SRC)/mixst.cpp \
+  $(AUDIOLIB_SRC)/multivoc.cpp \
+  $(AUDIOLIB_SRC)/music.cpp \
+  $(AUDIOLIB_SRC)/opl3.cpp \
+  $(AUDIOLIB_SRC)/vorbis.cpp \
+  $(AUDIOLIB_SRC)/formats.cpp \
+  $(AUDIOLIB_SRC)/flac.cpp \
+  $(AUDIOLIB_SRC)/drivers.cpp \
+  $(AUDIOLIB_SRC)/driver_adlib.cpp \
+  $(AUDIOLIB_SRC)/driver_sf2.cpp \
+  $(AUDIOLIB_SRC)/pitch.cpp \
+  $(AUDIOLIB_SRC)/xa.cpp \
+  $(AUDIOLIB_SRC)/xmp.cpp \
+  $(AUDIOLIB_SRC)/gmtimbre.cpp
+
+# $(AUDIOLIB_SRC)/driver_alsa.cpp \
+
+###############################################################################
+# MACT sources
+###############################################################################
+MACT_SRCS := \
+  $(MACT_SRC)/control.cpp \
+  $(MACT_SRC)/joystick.cpp \
+  $(MACT_SRC)/scriplib.cpp \
+  $(MACT_SRC)/animlib.cpp \
+  $(MACT_SRC)/keyboard.cpp
+
+BUILD_GLSL := \
+  $(BUILD_SRC)/polymost1Vert.glsl \
+  $(BUILD_SRC)/polymost1Frag.glsl
+
+###############################################################################
+# libretro-common
+###############################################################################
+LIBRETRO_COMMON_SRCS := \
+  $(LIBRETRO_COMMON_SRC)/rthreads/rthreads.c
+
+###############################################################################
+# Aggregated list
+###############################################################################
+ALL_SRCS := \
+  $(LIBRETRO_SRCS) \
+  $(BUILD_SRCS) \
+  $(GLAD_SRCS) \
+  $(GAME_SRCS) \
+  $(AUDIO_SRCS) \
+  $(MACT_SRCS) \
+  $(LIBRETRO_COMMON_SRCS)

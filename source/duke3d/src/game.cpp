@@ -6097,7 +6097,10 @@ static inline void G_CheckGametype(void)
         ud.m_respawn_items = ud.m_respawn_inventory = 1;
 }
 
-static void G_PostLoadPalette(void)
+#ifndef LIBRETRO
+static
+#endif
+void G_PostLoadPalette(void)
 {
     if (!(duke3d_globalflags & DUKE3D_NO_PALETTE_CHANGES))
     {
@@ -6166,7 +6169,10 @@ static void A_InitEnemyFlags(void)
 }
 #undef SETFLAG
 
-static void G_SetupGameButtons(void);
+#ifndef LIBRETRO
+static
+#endif
+void G_SetupGameButtons(void);
 
 // Throw in everything here that needs to be called after a Lua game state
 // recreation (or on initial startup in a non-Lunatic build.)
@@ -6201,7 +6207,10 @@ static void G_FatalEngineInitError(void)
     fatal_exit(tempbuf);
 }
 
-static void G_Startup(void)
+#ifndef LIBRETRO
+static
+#endif
+void G_Startup(void)
 {
     int32_t i;
 
@@ -6346,7 +6355,10 @@ void G_BackToMenu(void)
     G_UpdateAppTitle();
 }
 
-static int G_EndOfLevel(void)
+#ifndef LIBRETRO
+static
+#endif
+int G_EndOfLevel(void)
 {
     auto &p = *g_player[myconnectindex].ps;
 
@@ -7487,7 +7499,10 @@ void A_SpawnRandomGlass(int spriteNum, int wallNum, int glassCnt)
 }
 #endif
 
-static void G_SetupGameButtons(void)
+#ifndef LIBRETRO
+static
+#endif
+void G_SetupGameButtons(void)
 {
     CONTROL_DefineFlag(gamefunc_Move_Forward,FALSE);
     CONTROL_DefineFlag(gamefunc_Move_Backward,FALSE);
