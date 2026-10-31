@@ -235,6 +235,25 @@ static void radial_deadzone(float &x, float &y, float dz)
     y *= scale;
 }
 
+// Drop the pad bit when its shadow key is down so keyboard play isn't doubled up.
+static void mask_keyboard_shadowed_pad(void)
+{
+    static const struct { unsigned pad; unsigned key; } shadow[] = {
+        { RETRO_DEVICE_ID_JOYPAD_B,      RETROK_z },
+        { RETRO_DEVICE_ID_JOYPAD_A,      RETROK_x },
+        { RETRO_DEVICE_ID_JOYPAD_Y,      RETROK_a },
+        { RETRO_DEVICE_ID_JOYPAD_X,      RETROK_s },
+        { RETRO_DEVICE_ID_JOYPAD_L,      RETROK_q },
+        { RETRO_DEVICE_ID_JOYPAD_R,      RETROK_w },
+        { RETRO_DEVICE_ID_JOYPAD_SELECT, RETROK_RSHIFT },
+        { RETRO_DEVICE_ID_JOYPAD_START,  RETROK_RETURN },
+    };
+
+    for (auto const &s : shadow)
+        if (s_joypad_raw[s.pad] && input_state_cb(0, RETRO_DEVICE_KEYBOARD, 0, s.key))
+            s_joypad_raw[s.pad] = false;
+}
+
 void retro_poll_input_once(void)
 {
     ++s_input_frame;
@@ -259,6 +278,8 @@ void retro_poll_input_once(void)
     s_mb_l     = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_LEFT) != 0;
     s_mb_r     = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_RIGHT) != 0;
     s_mb_m     = input_state_cb(0, RETRO_DEVICE_MOUSE, 0, RETRO_DEVICE_ID_MOUSE_MIDDLE) != 0;
+
+    mask_keyboard_shadowed_pad();
 }
 
 void poll_input(void)
